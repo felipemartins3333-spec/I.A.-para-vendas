@@ -1,0 +1,15 @@
+# Arquivos com senhas/chaves - NUNCA vão para o GitHub
+.env
+.env.*
+
+# Arquivos temporários do Python
+__pycache__/
+*.pyc
+.venv/
+venv/
+
+# Pacotes do Node (são baixados de novo quando precisar)
+node_modules/
+
+# Dados locais do n8n (contém credenciais)
+.n8n/
