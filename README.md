@@ -1,2 +1,2 @@
-# automa-es-workana
+# automações
 Projetos de automação e portfólio
