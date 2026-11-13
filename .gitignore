@@ -1,6 +1,7 @@
 # Arquivos com senhas/chaves - NUNCA vão para o GitHub
 .env
 .env.*
+!.env.example
 
 # Arquivos temporários do Python
 __pycache__/
