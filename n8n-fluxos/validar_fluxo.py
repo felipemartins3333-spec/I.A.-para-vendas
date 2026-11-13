@@ -23,7 +23,8 @@ ERROS, AVISOS = [], []
 def catalogo():
     """Lê a lista de nós do n8n instalado (rodando `npx n8n` pelo menos uma vez)."""
     cat = {}
-    raizes = glob.glob(os.path.expanduser("~/.npm/_npx/*/node_modules"))
+    raizes = glob.glob("/workspaces/.n8n-app/node_modules")
+    raizes += glob.glob(os.path.expanduser("~/.npm/_npx/*/node_modules"))
     raizes += glob.glob("/usr/lib/node_modules") + glob.glob("/usr/local/lib/node_modules")
     RAIZES.extend(raizes)
     pacotes = [
@@ -144,6 +145,8 @@ def main(caminho):
     # 6) credenciais embutidas
     for n in nos:
         for tipo, c in n.get("credentials", {}).items():
+            if str(c.get("id", "")).startswith("sdr"):
+                continue  # credenciais com os nomes padrão deste projeto (ex.: "Redis SDR")
             AVISOS.append(f"'{n['name']}' traz a credencial '{c.get('name')}' de outro n8n. Escolha a sua dentro do nó.")
 
     print(f"Arquivo: {caminho}  |  {len(nos)} nós")

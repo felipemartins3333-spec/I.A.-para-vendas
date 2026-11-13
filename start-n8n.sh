@@ -5,6 +5,10 @@
 PORTA=5678
 LOG=/tmp/n8n.log
 PIDFILE=/tmp/n8n.pid
+# Versão fixa do n8n, instalada uma única vez em /workspaces (não baixa versão nova sozinho).
+N8N_VERSAO=2.47.7
+N8N_APP=/workspaces/.n8n-app
+N8N_BIN="$N8N_APP/node_modules/.bin/n8n"
 LINK="https://${CODESPACE_NAME}-${PORTA}.app.github.dev/"
 
 export WEBHOOK_URL="$LINK"
@@ -25,7 +29,8 @@ else
   echo "⏳ Ligando o n8n em segundo plano (1ª vez pode levar 5-10 minutos para baixar)..."
   echo "   Log em: $LOG"
   # setsid: roda num "grupo" próprio, para o stop-n8n.sh desligar tudo de uma vez
-  setsid nohup npx --yes n8n > "$LOG" 2>&1 < /dev/null &
+  # Se o n8n ainda não estiver instalado, instala (1ª vez, uns 5-10 min) e depois liga.
+  setsid nohup sh -c "[ -x '$N8N_BIN' ] || npm install --prefix '$N8N_APP' n8n@$N8N_VERSAO --no-audit --no-fund; exec '$N8N_BIN' start" > "$LOG" 2>&1 < /dev/null &
   echo $! > "$PIDFILE"
 
   # 2) Espera até 10 minutos o n8n responder
@@ -45,11 +50,8 @@ fi
 if gh codespace ports visibility "${PORTA}:public" -c "$CODESPACE_NAME" >/dev/null 2>&1; then
   echo "✅ Porta $PORTA está PÚBLICA."
 else
-  echo "⚠️  Não consegui deixar a porta pública pelo comando."
-  echo "   Normalmente é porque a porta 5678 ainda não aparece na aba PORTAS."
-  echo "   Abra a aba PORTAS (se não tiver a 5678, clique em 'Adicionar porta' e digite 5678)"
-  echo "   e depois: clique direito na 5678 > Visibilidade da porta > Público."
-  echo "   (ou rode ./start-n8n.sh de novo depois que a porta aparecer)"
+  echo "ℹ️  A porta 5678 ficou como Privada (tudo bem: só você acessa, e a Evolution fala com o n8n por dentro)."
+  echo "   Se a 5678 não aparecer na aba PORTAS do VS Code, clique em 'Adicionar porta' e digite 5678."
 fi
 
 echo ""

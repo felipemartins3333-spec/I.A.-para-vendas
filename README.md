@@ -1,72 +1,59 @@
 # I.A. para vendas
 
-Ambiente para demonstrar automações de vendas para clientes B2B, usando **n8n** (montador de fluxos visual) e **bots em Python**.
+Ambiente para demonstrar automações de vendas para clientes B2B: um **agente SDR de WhatsApp** feito com **n8n**, **Evolution API** (WhatsApp não oficial) e **IA grátis da Groq**.
+
+👉 **Comece por aqui:** [`docs/PASSO-A-PASSO.md`](docs/PASSO-A-PASSO.md) (ligar tudo, conectar o chip pelo QR Code, Supabase, Groq, teste e o que fazer se der erro).
 
 ## 📁 Onde fica cada coisa
 
-| Pasta | O que guardar lá |
+| Caminho | O que é |
 |---|---|
-| `bots/` | Os bots escritos em Python (ex.: bot do Telegram, bot que usa o Gemini) |
-| `n8n-fluxos/` | Os fluxos do n8n exportados em arquivo `.json` (backup e demonstração) |
-| `docs/` | Anotações, roteiros de demonstração, materiais para clientes |
-| `start-n8n.sh` | Script que liga o n8n |
-| `stop-n8n.sh` | Script que desliga o n8n |
+| `n8n-fluxos/SDR_Vertice_MVP_Groq_Texto.json` | **O fluxo do MVP** (só texto, agente na Groq). É este que você importa/usa. |
+| `n8n-fluxos/Template_SDR_EVO_v2_Vertice.json` | Base com o prompt da Vértice (não alterar). |
+| `n8n-fluxos/Template_SDR_EVO_v2__1_.json` | Template original do Victor (não alterar). |
+| `n8n-fluxos/SDR_Clinica_Aurora_Gemini_Groq.json` | Cópia de teste com uma clínica fictícia. |
+| `n8n-fluxos/gerar_mvp.py` | Gera o fluxo do MVP a partir de uma base. |
+| `n8n-fluxos/validar_fluxo.py` | Confere se um fluxo está com a estrutura certa. |
+| `docs/` | Guias e o SQL da tabela do Supabase. |
+| `bots/` | Bots em Python (ainda vazio). |
+| `docker-compose.yml` | Evolution API + Redis + Postgres. |
+| `start-evolution.sh` / `stop-evolution.sh` | Liga / desliga a Evolution. |
+| `start-n8n.sh` / `stop-n8n.sh` | Liga / desliga o n8n. |
 
-## ▶️ Como ligar o n8n
+## ▶️ Ligar e desligar
 
-1. No terminal (parte de baixo da tela), digite:
-   ```bash
-   ./start-n8n.sh
-   ```
-2. Espere aparecer a frase `n8n ligado, abra o link` (na 1ª vez pode levar de 5 a 10 minutos, porque ele baixa o n8n).
-3. Abra a aba **PORTAS** (ao lado de TERMINAL). Se a porta **5678** não aparecer, clique em **Adicionar porta** e digite `5678`.
-4. Clique com o botão direito na 5678 → **Visibilidade da porta** → **Público**.
-5. Clique no ícone de globo 🌐 da linha 5678 (ou abra o link que o script mostrou).
-
-Para **desligar** o n8n:
 ```bash
-./stop-n8n.sh
+./start-evolution.sh   # Evolution API, Redis e Postgres (Docker)
+./start-n8n.sh         # n8n
+
+./stop-n8n.sh          # desligar
+./stop-evolution.sh
 ```
 
-> 💡 O n8n roda em segundo plano: você pode fechar o terminal ou usá-lo para outras coisas que ele continua ligado.
-> Se der problema, veja o que aconteceu com: `tail -n 30 /tmp/n8n.log`
->
-> Seus fluxos e contas do n8n ficam em `/workspaces/.n8n-dados`, fora do projeto. Por isso eles **não** vão para o GitHub; para guardar um fluxo, exporte-o (veja abaixo).
+Telas: n8n na porta **5678**, painel da Evolution na porta **8080** (aba **PORTAS** do VS Code, ícone de globo 🌐).
+Registro do n8n: `tail -n 30 /tmp/n8n.log`. Registro da Evolution: `docker compose logs --tail 30 evolution`.
 
-### Salvando seus fluxos no projeto
-No n8n, abra o fluxo → menu `...` (canto superior direito) → **Download**. Arraste o arquivo baixado para a pasta `n8n-fluxos/`.
+## 🛠️ Gerar e conferir o fluxo
 
-## 🔑 Chaves de API (Gemini, Telegram etc.)
-
-**Nunca** escreva chaves dentro do código. Guarde-as nos **Codespaces Secrets**:
-
-1. Acesse https://github.com/settings/codespaces
-2. Em **Secrets**, clique em **New secret**.
-3. Nome: por exemplo `GEMINI_API_KEY` ou `TELEGRAM_BOT_TOKEN`. Valor: cole a chave.
-4. Em **Repository access**, escolha este repositório.
-5. Reinicie o Codespace (ou feche e abra de novo). A chave vira uma "variável de ambiente".
-
-No Python, leia assim:
-```python
-import os
-chave = os.environ["GEMINI_API_KEY"]
+```bash
+python3 n8n-fluxos/gerar_mvp.py n8n-fluxos/Template_SDR_EVO_v2_Vertice.json n8n-fluxos/SDR_Vertice_MVP_Groq_Texto.json
+python3 n8n-fluxos/validar_fluxo.py n8n-fluxos/SDR_Vertice_MVP_Groq_Texto.json
 ```
 
-No n8n, prefira cadastrar a chave em **Credentials** (fica guardada no próprio n8n, fora do Git).
+## 🔑 Chaves e senhas (nunca no código)
 
-## 💾 Como salvar no GitHub (commit e push)
+- **Senhas da Evolution, Redis e Postgres:** geradas sozinhas no arquivo `.env` (já está no `.gitignore`).
+- **Chaves da Groq e do Supabase:** coladas direto nas credenciais do n8n (veja o guia).
+- **Chaves para bots em Python:** [Codespaces Secrets](https://github.com/settings/codespaces) → **New secret** (nome como `GEMINI_API_KEY`), escolha este repositório e reinicie o Codespace. No Python: `os.environ["GEMINI_API_KEY"]`.
 
-No terminal:
+## 💾 Salvar no GitHub (commit e push)
+
 ```bash
 git add .
-git commit -m "Descreva aqui o que você mudou"
+git commit -m "Descreva o que mudou"
 git push
 ```
 
-- `git add .` → separa todos os arquivos alterados
-- `git commit -m "..."` → tira uma "foto" das mudanças com uma descrição
-- `git push` → envia essa foto para o GitHub
+## ⏱️ Economizando as horas grátis do Codespace
 
-## ⏱️ Economizando horas do Codespace
-
-O plano grátis tem limite de horas. Quando terminar, pare o Codespace em https://github.com/codespaces → `...` → **Stop codespace**.
+Quando terminar, rode os dois `stop` e pare o Codespace em https://github.com/codespaces → `...` → **Stop codespace**. Em https://github.com/settings/codespaces deixe o *idle timeout* em 5 minutos.
